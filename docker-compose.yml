@@ -63,6 +63,21 @@ services:
       - ./backend:/app
     command: rq worker --url redis://redis:6379 default
 
+  scheduler:
+    build: ./backend
+    container_name: sentinela-scheduler
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: python -m app.workers.scheduler
+
 volumes:
   postgres_data:
   redis_data:

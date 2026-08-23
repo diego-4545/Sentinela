@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.models.check import Check
 from app.models.monitor import Monitor
 from app.models.user import User
 from app.schemas.monitor import MonitorCreate, MonitorOut, MonitorUpdate
+from app.services.checker import ejecutar_check
 
 router = APIRouter(prefix="/monitors", tags=["monitors"])
 
@@ -91,3 +93,40 @@ def eliminar_monitor(
     db.delete(monitor)
     db.commit()
     return None
+
+
+@router.post("/{monitor_id}/check-now", status_code=status.HTTP_201_CREATED)
+def forzar_check_inmediato(
+    monitor_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ejecuta un check de forma SÍNCRONA (bloqueante, no pasa por la cola de RQ) para
+    pruebas manuales rápidas desde Swagger. El scheduler automático (worker/scheduler.py)
+    es el que usa la cola de forma asíncrona en producción normal.
+    """
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+
+    resultado = ejecutar_check(monitor.url)
+
+    check = Check(
+        monitor_id=monitor.id,
+        exitoso=resultado.exitoso,
+        status_code=resultado.status_code,
+        tiempo_respuesta_ms=resultado.tiempo_respuesta_ms,
+        tipo_error=resultado.tipo_error,
+        detalle_error=resultado.detalle_error,
+    )
+    db.add(check)
+    db.commit()
+    db.refresh(check)
+
+    return {
+        "check_id": check.id,
+        "exitoso": check.exitoso,
+        "status_code": check.status_code,
+        "tiempo_respuesta_ms": check.tiempo_respuesta_ms,
+        "tipo_error": check.tipo_error,
+        "detalle_error": check.detalle_error,
+    }
