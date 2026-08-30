@@ -21,6 +21,9 @@ class Monitor(Base):
     # Intervalo entre checks, en segundos. Mínimo 60s (ver justificación de riesgo DoS/SSRF en el documento del proyecto).
     intervalo_segundos = Column(Integer, default=300, nullable=False)
 
+    # Número de fallos consecutivos antes de declarar un incidente (variable de control: umbral_fallos_consecutivos).
+    umbral_fallos_consecutivos = Column(Integer, default=2, nullable=False)
+
     activo = Column(Boolean, default=True, nullable=False)
 
     # Verificación de propiedad de dominio (mecanismo de archivo, ver Entregable 1)

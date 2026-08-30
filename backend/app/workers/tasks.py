@@ -8,11 +8,13 @@ from app.core.database import SessionLocal
 from app.models.check import Check
 from app.models.monitor import Monitor
 from app.services.checker import ejecutar_check
+from app.services.incident_detector import evaluar_incidente
 
 
 def tarea_check_monitor(monitor_id: str) -> None:
     """
-    Job de RQ: ejecuta un check para el monitor dado y guarda el resultado.
+    Job de RQ: ejecuta un check para el monitor dado, guarda el resultado,
+    y evalúa si esto abre o cierra un incidente.
     Recibe el id como string (RQ serializa los argumentos, UUID no siempre viaja bien).
     """
     db = SessionLocal()
@@ -33,5 +35,8 @@ def tarea_check_monitor(monitor_id: str) -> None:
         )
         db.add(check)
         db.commit()
+        db.refresh(check)
+
+        evaluar_incidente(monitor, check, db)
     finally:
         db.close()

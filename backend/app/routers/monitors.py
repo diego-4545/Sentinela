@@ -10,6 +10,9 @@ from app.models.monitor import Monitor
 from app.models.user import User
 from app.schemas.monitor import MonitorCreate, MonitorOut, MonitorUpdate
 from app.services.checker import ejecutar_check
+from app.services.incident_detector import evaluar_incidente
+from app.models.incident import Incident
+from app.schemas.incident import IncidentOut
 
 router = APIRouter(prefix="/monitors", tags=["monitors"])
 
@@ -122,6 +125,8 @@ def forzar_check_inmediato(
     db.commit()
     db.refresh(check)
 
+    evaluar_incidente(monitor, check, db)
+
     return {
         "check_id": check.id,
         "exitoso": check.exitoso,
@@ -130,3 +135,18 @@ def forzar_check_inmediato(
         "tipo_error": check.tipo_error,
         "detalle_error": check.detalle_error,
     }
+
+
+@router.get("/{monitor_id}/incidents", response_model=list[IncidentOut])
+def listar_incidentes(
+    monitor_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+    return (
+        db.query(Incident)
+        .filter(Incident.monitor_id == monitor.id)
+        .order_by(Incident.fecha_inicio.desc())
+        .all()
+    )
