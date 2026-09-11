@@ -24,6 +24,9 @@ class Monitor(Base):
     # Número de fallos consecutivos antes de declarar un incidente (variable de control: umbral_fallos_consecutivos).
     umbral_fallos_consecutivos = Column(Integer, default=2, nullable=False)
 
+    # Tiempo mínimo entre notificaciones repetidas de un mismo incidente activo (variable de control: periodo_enfriamiento_segundos).
+    periodo_enfriamiento_segundos = Column(Integer, default=1800, nullable=False)  # 30 minutos por defecto
+
     activo = Column(Boolean, default=True, nullable=False)
 
     # Verificación de propiedad de dominio (mecanismo de archivo, ver Entregable 1)

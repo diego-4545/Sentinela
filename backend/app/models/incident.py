@@ -22,4 +22,7 @@ class Incident(Base):
 
     resuelto = Column(Boolean, default=False, nullable=False)
 
+    # Control de notificaciones (sesión 6): cuándo fue la última vez que se avisó de este incidente
+    ultima_notificacion_enviada = Column(DateTime, nullable=True)
+
     monitor = relationship("Monitor", backref="incidents")

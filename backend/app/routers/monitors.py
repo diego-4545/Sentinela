@@ -8,11 +8,13 @@ from app.core.deps import get_current_user
 from app.models.check import Check
 from app.models.monitor import Monitor
 from app.models.user import User
+from app.models.incident import Incident
+from app.models.notification_channel import NotificationChannel
 from app.schemas.monitor import MonitorCreate, MonitorOut, MonitorUpdate
+from app.schemas.incident import IncidentOut
+from app.schemas.notification_channel import NotificationChannelCreate, NotificationChannelOut
 from app.services.checker import ejecutar_check
 from app.services.incident_detector import evaluar_incidente
-from app.models.incident import Incident
-from app.schemas.incident import IncidentOut
 
 router = APIRouter(prefix="/monitors", tags=["monitors"])
 
@@ -150,3 +152,60 @@ def listar_incidentes(
         .order_by(Incident.fecha_inicio.desc())
         .all()
     )
+
+
+# ── Canales de notificación (sesión 6) ──────────────────────────────
+
+@router.post("/{monitor_id}/channels", response_model=NotificationChannelOut, status_code=status.HTTP_201_CREATED)
+def crear_canal_notificacion(
+    monitor_id: uuid.UUID,
+    payload: NotificationChannelCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+
+    canal = NotificationChannel(
+        monitor_id=monitor.id,
+        tipo=payload.tipo,
+        destino=payload.destino,
+    )
+    db.add(canal)
+    db.commit()
+    db.refresh(canal)
+    return canal
+
+
+@router.get("/{monitor_id}/channels", response_model=list[NotificationChannelOut])
+def listar_canales_notificacion(
+    monitor_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+    return (
+        db.query(NotificationChannel)
+        .filter(NotificationChannel.monitor_id == monitor.id)
+        .order_by(NotificationChannel.created_at.desc())
+        .all()
+    )
+
+
+@router.delete("/{monitor_id}/channels/{channel_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_canal_notificacion(
+    monitor_id: uuid.UUID,
+    channel_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+    canal = (
+        db.query(NotificationChannel)
+        .filter(NotificationChannel.id == channel_id, NotificationChannel.monitor_id == monitor.id)
+        .first()
+    )
+    if not canal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Canal no encontrado")
+    db.delete(canal)
+    db.commit()
+    return None
