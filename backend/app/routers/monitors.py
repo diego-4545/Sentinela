@@ -12,7 +12,7 @@ from app.models.incident import Incident
 from app.models.notification_channel import NotificationChannel
 from app.schemas.monitor import MonitorCreate, MonitorOut, MonitorUpdate
 from app.schemas.incident import IncidentOut
-from app.schemas.notification_channel import NotificationChannelCreate, NotificationChannelOut
+from app.schemas.notification_channel import NotificationChannelCreate, NotificationChannelOut, NotificationChannelUpdate
 from app.services.checker import ejecutar_check
 from app.services.incident_detector import evaluar_incidente
 
@@ -209,3 +209,26 @@ def eliminar_canal_notificacion(
     db.delete(canal)
     db.commit()
     return None
+
+
+@router.patch("/{monitor_id}/channels/{channel_id}", response_model=NotificationChannelOut)
+def actualizar_canal_notificacion(
+    monitor_id: uuid.UUID,
+    channel_id: uuid.UUID,
+    payload: NotificationChannelUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+    canal = (
+        db.query(NotificationChannel)
+        .filter(NotificationChannel.id == channel_id, NotificationChannel.monitor_id == monitor.id)
+        .first()
+    )
+    if not canal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Canal no encontrado")
+
+    canal.activo = payload.activo
+    db.commit()
+    db.refresh(canal)
+    return canal

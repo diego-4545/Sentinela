@@ -16,6 +16,10 @@ class NotificationChannelCreate(BaseModel):
         return v
 
 
+class NotificationChannelUpdate(BaseModel):
+    activo: bool = Field(description="True para activar, False para pausar sin borrar")
+
+
 class NotificationChannelOut(BaseModel):
     id: uuid.UUID
     monitor_id: uuid.UUID
