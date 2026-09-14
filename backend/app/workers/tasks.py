@@ -13,8 +13,8 @@ from app.services.incident_detector import evaluar_incidente
 
 def tarea_check_monitor(monitor_id: str) -> None:
     """
-    Job de RQ: ejecuta un check para el monitor dado, guarda el resultado,
-    y evalúa si esto abre o cierra un incidente.
+    Job de RQ: ejecuta un check para el monitor dado, guarda el resultado
+    (incluyendo postura de seguridad), y evalúa si esto abre o cierra un incidente.
     Recibe el id como string (RQ serializa los argumentos, UUID no siempre viaja bien).
     """
     db = SessionLocal()
@@ -32,6 +32,11 @@ def tarea_check_monitor(monitor_id: str) -> None:
             tiempo_respuesta_ms=resultado.tiempo_respuesta_ms,
             tipo_error=resultado.tipo_error,
             detalle_error=resultado.detalle_error,
+            ssl_dias_restantes=resultado.ssl_dias_restantes,
+            ssl_dominio_coincide=resultado.ssl_dominio_coincide,
+            ssl_emisor=resultado.ssl_emisor,
+            ssl_autofirmado=resultado.ssl_autofirmado,
+            headers_seguridad=resultado.headers_seguridad,
         )
         db.add(check)
         db.commit()

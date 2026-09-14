@@ -122,6 +122,11 @@ def forzar_check_inmediato(
         tiempo_respuesta_ms=resultado.tiempo_respuesta_ms,
         tipo_error=resultado.tipo_error,
         detalle_error=resultado.detalle_error,
+        ssl_dias_restantes=resultado.ssl_dias_restantes,
+        ssl_dominio_coincide=resultado.ssl_dominio_coincide,
+        ssl_emisor=resultado.ssl_emisor,
+        ssl_autofirmado=resultado.ssl_autofirmado,
+        headers_seguridad=resultado.headers_seguridad,
     )
     db.add(check)
     db.commit()
@@ -136,6 +141,11 @@ def forzar_check_inmediato(
         "tiempo_respuesta_ms": check.tiempo_respuesta_ms,
         "tipo_error": check.tipo_error,
         "detalle_error": check.detalle_error,
+        "ssl_dias_restantes": check.ssl_dias_restantes,
+        "ssl_dominio_coincide": check.ssl_dominio_coincide,
+        "ssl_emisor": check.ssl_emisor,
+        "ssl_autofirmado": check.ssl_autofirmado,
+        "headers_seguridad": check.headers_seguridad,
     }
 
 
