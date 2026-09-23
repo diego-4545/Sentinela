@@ -36,7 +36,16 @@ def _incidente_abierto(monitor_id, db: Session) -> Incident | None:
 
 
 def _notificar(monitor: Monitor, mensaje: str, db: Session) -> None:
-    """Envía el mensaje a todos los canales activos configurados para este monitor."""
+    """
+    Envía el mensaje a todos los canales activos configurados para este monitor.
+    Solo se ejecuta si el monitor ya pasó la verificación de propiedad de dominio
+    (ver app/services/domain_verifier.py) — el scheduler sigue chequeando monitores
+    no verificados con normalidad, pero no se les envían notificaciones hasta que
+    el usuario demuestre control real sobre el dominio.
+    """
+    if not monitor.verified:
+        return
+
     canales = (
         db.query(NotificationChannel)
         .filter(NotificationChannel.monitor_id == monitor.id, NotificationChannel.activo.is_(True))

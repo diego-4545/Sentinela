@@ -15,6 +15,7 @@ from app.schemas.incident import IncidentOut
 from app.schemas.notification_channel import NotificationChannelCreate, NotificationChannelOut, NotificationChannelUpdate
 from app.services.checker import ejecutar_check
 from app.services.incident_detector import evaluar_incidente
+from app.services.domain_verifier import verificar_propiedad_dominio
 
 router = APIRouter(prefix="/monitors", tags=["monitors"])
 
@@ -162,6 +163,32 @@ def listar_incidentes(
         .order_by(Incident.fecha_inicio.desc())
         .all()
     )
+
+
+@router.post("/{monitor_id}/verify")
+def verificar_dominio(
+    monitor_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Verifica propiedad del dominio consultando https://<dominio>/sentinela-verify-<token>.txt
+    Si el contenido coincide con el token del monitor, marca verified=True y las
+    notificaciones quedan habilitadas para este monitor a partir de ahora.
+    """
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+
+    resultado = verificar_propiedad_dominio(monitor.url, monitor.verification_token)
+
+    if resultado.verificado:
+        monitor.verified = True
+        db.commit()
+
+    return {
+        "verified": monitor.verified,
+        "detalle": resultado.detalle,
+        "archivo_esperado": f"sentinela-verify-{monitor.verification_token}.txt",
+    }
 
 
 # ── Canales de notificación (sesión 6) ──────────────────────────────
