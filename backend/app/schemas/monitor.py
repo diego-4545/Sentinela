@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-INTERVALO_MINIMO_SEGUNDOS = 60  # ver justificación de riesgo DoS/SSRF en la documentación del proyecto
+INTERVALO_MINIMO_SEGUNDOS = 60
 
 
 class MonitorCreate(BaseModel):
@@ -23,6 +23,9 @@ class MonitorUpdate(BaseModel):
     nombre: str | None = Field(default=None, min_length=1, max_length=100)
     intervalo_segundos: int | None = Field(default=None, ge=INTERVALO_MINIMO_SEGUNDOS)
     activo: bool | None = None
+    # Nuevo: para activar/desactivar cada monitor en cada status page de forma independiente
+    incluido_en_status_personal: bool | None = None
+    incluido_en_status_global: bool | None = None
 
 
 class MonitorOut(BaseModel):
@@ -33,6 +36,8 @@ class MonitorOut(BaseModel):
     activo: bool
     verified: bool
     verification_token: str
+    incluido_en_status_personal: bool
+    incluido_en_status_global: bool
     created_at: datetime
 
     class Config:

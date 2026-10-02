@@ -18,20 +18,21 @@ class Monitor(Base):
     nombre = Column(String, nullable=False)
     url = Column(String, nullable=False)
 
-    # Intervalo entre checks, en segundos. Mínimo 60s (ver justificación de riesgo DoS/SSRF en el documento del proyecto).
     intervalo_segundos = Column(Integer, default=300, nullable=False)
-
-    # Número de fallos consecutivos antes de declarar un incidente (variable de control: umbral_fallos_consecutivos).
     umbral_fallos_consecutivos = Column(Integer, default=2, nullable=False)
-
-    # Tiempo mínimo entre notificaciones repetidas de un mismo incidente activo (variable de control: periodo_enfriamiento_segundos).
-    periodo_enfriamiento_segundos = Column(Integer, default=1800, nullable=False)  # 30 minutos por defecto
+    periodo_enfriamiento_segundos = Column(Integer, default=1800, nullable=False)
 
     activo = Column(Boolean, default=True, nullable=False)
 
-    # Verificación de propiedad de dominio (mecanismo de archivo, ver Entregable 1)
     verification_token = Column(String, default=lambda: secrets.token_hex(8), nullable=False)
     verified = Column(Boolean, default=False, nullable=False)
+
+    # --- Status pages (nuevo) ---
+    # Personal: aparece en la status page propia del usuario (GET /status/{user_id})
+    incluido_en_status_personal = Column(Boolean, default=False, nullable=False)
+    # Global: aparece en la status page agregada de todos los usuarios (GET /status/global).
+    # Solo tiene efecto si, además, verified=True (misma regla que ya aplica a notificaciones).
+    incluido_en_status_global = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
