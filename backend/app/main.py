@@ -1,6 +1,7 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, monitors
+from app.routers import auth, monitors, status
 
 app = FastAPI(
     title="Sentinela API",
@@ -8,8 +9,25 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Configuración de CORS para permitir solicitudes desde los subdominios del frontend y desarrollo local
+origins = [
+    "https://app.sentinela.my",
+    "https://status.sentinela.my",
+    "http://localhost:5173",  # Vite local por defecto
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth.router)
 app.include_router(monitors.router)
+app.include_router(status.router)
 
 
 @app.get("/")
@@ -19,5 +37,5 @@ def root():
 
 @app.get("/health")
 def health():
-    """Endpoint simple para verificar que la API está viva (útil para healthchecks propios más adelante)."""
+    """Endpoint simple para verificar que la API está viva."""
     return {"status": "healthy"}

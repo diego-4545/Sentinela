@@ -42,6 +42,17 @@ def crear_monitor(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    monitor_existente = (
+        db.query(Monitor)
+        .filter(Monitor.user_id == current_user.id, Monitor.url == payload.url)
+        .first()
+    )
+    if monitor_existente:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe un monitor para esta URL en tu cuenta",
+        )
+
     monitor = Monitor(
         user_id=current_user.id,
         nombre=payload.nombre,
@@ -269,3 +280,22 @@ def actualizar_canal_notificacion(
     db.commit()
     db.refresh(canal)
     return canal
+
+@router.get("/{monitor_id}/checks")
+def listar_checks_monitor(
+    monitor_id: uuid.UUID,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retorna el historial de checks de un monitor específico, ordenados del más reciente al más antiguo.
+    """
+    monitor = _get_monitor_or_404(monitor_id, current_user, db)
+    return (
+        db.query(Check)
+        .filter(Check.monitor_id == monitor.id)
+        .order_by(Check.created_at.desc())
+        .limit(limit)
+        .all()
+    )
