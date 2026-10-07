@@ -41,9 +41,6 @@ def verificar_ssl(url: str, timeout: int = 10) -> ResultadoSSL | None:
 
     try:
         contexto = ssl.create_default_context()
-        # No verificamos la cadena aquí (eso es justo lo que queremos evaluar, no dar por hecho) —
-        # usamos un contexto permisivo para poder inspeccionar certificados autofirmados también,
-        # y determinamos la confiabilidad nosotros mismos.
         contexto.check_hostname = False
         contexto.verify_mode = ssl.CERT_NONE
 
@@ -52,8 +49,6 @@ def verificar_ssl(url: str, timeout: int = 10) -> ResultadoSSL | None:
                 cert_bin = ssock.getpeercert(binary_form=True)
                 cert = ssock.getpeercert(binary_form=False)
 
-        # getpeercert(binary_form=False) regresa {} si verify_mode=CERT_NONE, así que
-        # usamos un segundo contexto SÍ verificador para sacar los detalles del certificado.
         contexto_verificador = ssl.create_default_context()
         try:
             with socket.create_connection((hostname, puerto), timeout=timeout) as sock:
@@ -61,8 +56,6 @@ def verificar_ssl(url: str, timeout: int = 10) -> ResultadoSSL | None:
                     cert = ssock.getpeercert()
             autofirmado = False
         except ssl.SSLCertVerificationError as e:
-            # No se pudo verificar la cadena de confianza -> autofirmado o emisor no reconocido.
-            # Reconectamos sin verificar solo para poder leer los datos del certificado igual.
             contexto_sin_verificar = ssl._create_unverified_context()
             with socket.create_connection((hostname, puerto), timeout=timeout) as sock:
                 with contexto_sin_verificar.wrap_socket(sock, server_hostname=hostname) as ssock:

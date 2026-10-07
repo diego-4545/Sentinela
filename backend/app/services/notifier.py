@@ -30,7 +30,7 @@ def enviar_discord(webhook_url: str, mensaje: str) -> bool:
 def enviar_email(destino: str, asunto: str, cuerpo: str) -> bool:
     """Envía un correo vía SMTP. Regresa True si se envió bien."""
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
-        return False  # SMTP no configurado (ver .env.example)
+        return False
 
     mensaje = MIMEText(cuerpo)
     mensaje["Subject"] = asunto
@@ -49,7 +49,8 @@ def enviar_email(destino: str, asunto: str, cuerpo: str) -> bool:
 
 def construir_mensaje_apertura(monitor_nombre: str, monitor_url: str, causa: str) -> str:
     return (
-        f"🔴 Sentinela detectó una caída\n"
+        "INCIDENTE ABIERTO\n\n"
+        "Se detectó una interrupción en el servicio.\n\n"
         f"Monitor: {monitor_nombre}\n"
         f"URL: {monitor_url}\n"
         f"Causa: {causa}"
@@ -58,8 +59,9 @@ def construir_mensaje_apertura(monitor_nombre: str, monitor_url: str, causa: str
 
 def construir_mensaje_cierre(monitor_nombre: str, monitor_url: str) -> str:
     return (
-        f"✅ Sentinela confirma la recuperación\n"
+        "INCIDENTE RESUELTO\n\n"
+        "El servicio volvió a responder correctamente.\n\n"
         f"Monitor: {monitor_nombre}\n"
         f"URL: {monitor_url}\n"
-        f"El servicio volvió a responder correctamente."
+        "Estado: Operativo"
     )

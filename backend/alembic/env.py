@@ -5,14 +5,12 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Permite importar "app.xxx" cuando Alembic corre desde /app dentro del contenedor
 sys.path.insert(0, os.getcwd())
 
-from app.models import Base  # noqa: E402  (import intencional después del sys.path)
+from app.models import Base
 
 config = context.config
 
-# Toma la URL de conexión de la variable de entorno en vez de hardcodearla en alembic.ini
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", ""))
 
 if config.config_file_name is not None:

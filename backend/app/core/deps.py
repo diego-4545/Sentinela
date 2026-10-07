@@ -9,6 +9,7 @@ from app.core.security import decode_access_token
 from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_optional_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 def get_current_user(
@@ -35,3 +36,12 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def get_optional_current_user(
+    token: str | None = Depends(oauth2_optional_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    if token is None:
+        return None
+    return get_current_user(token=token, db=db)

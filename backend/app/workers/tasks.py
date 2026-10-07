@@ -21,7 +21,7 @@ def tarea_check_monitor(monitor_id: str) -> None:
     try:
         monitor = db.query(Monitor).filter(Monitor.id == uuid.UUID(monitor_id)).first()
         if not monitor:
-            return  # el monitor pudo haberse borrado entre que se encoló el job y que se ejecutó
+            return
 
         resultado = ejecutar_check(monitor.url)
 

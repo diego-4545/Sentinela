@@ -58,9 +58,6 @@ def ejecutar_check(url: str) -> ResultadoCheck:
     saltos = 0
 
     while saltos <= MAX_REDIRECTS:
-        # 1. Validación SSRF: esquema + resolución de IP contra rangos bloqueados.
-        #    Se hace en CADA salto, no solo en la URL original (previene DNS rebinding
-        #    y redirects maliciosos hacia recursos internos).
         try:
             validar_url_completa(url_actual)
         except SSRFValidationError as e:
@@ -69,13 +66,10 @@ def ejecutar_check(url: str) -> ResultadoCheck:
                 tipo_error="ssrf_blocked", detalle_error=str(e),
             )
 
-        # 2. Ejecutar la petición SIN seguir redirects automáticamente
-        #    (follow_redirects=False), para poder revalidar cada salto nosotros mismos.
         inicio = time.monotonic()
         try:
             with httpx.Client(timeout=TIMEOUT_SEGUNDOS, follow_redirects=False) as client:
                 response = client.head(url_actual)
-                # Algunos servidores no soportan HEAD correctamente (405/501): reintenta con GET
                 if response.status_code in (405, 501):
                     response = client.get(url_actual)
         except httpx.ConnectTimeout:
@@ -101,17 +95,14 @@ def ejecutar_check(url: str) -> ResultadoCheck:
 
         tiempo_ms = int((time.monotonic() - inicio) * 1000)
 
-        # 3. Si es un redirect (3xx con Location), seguirlo manualmente y revalidar
         if response.status_code in (301, 302, 303, 307, 308) and "location" in response.headers:
             saltos += 1
             nueva_url = httpx.URL(url_actual).join(response.headers["location"])
             url_actual = str(nueva_url)
             continue
 
-        # 4. Cualquier otra respuesta: clasificar como éxito (2xx/3xx sin location) o error de cliente/servidor
         exitoso = response.status_code < 500
 
-        # 5. Postura de seguridad: solo tiene sentido evaluarla si de verdad hubo respuesta.
         resultado_ssl = verificar_ssl(url_actual)
         headers_seguridad = evaluar_headers_seguridad(response.headers)
 
@@ -128,7 +119,6 @@ def ejecutar_check(url: str) -> ResultadoCheck:
             headers_seguridad=headers_seguridad,
         )
 
-    # Se agotaron los redirects permitidos sin llegar a una respuesta final
     return ResultadoCheck(
         exitoso=False, status_code=None, tiempo_respuesta_ms=None,
         tipo_error="too_many_redirects", detalle_error=f"Se excedió el límite de {MAX_REDIRECTS} redirecciones",

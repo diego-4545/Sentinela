@@ -20,7 +20,7 @@ from app.models.check import Check
 from app.models.monitor import Monitor
 from app.workers.tasks import tarea_check_monitor
 
-TICK_SEGUNDOS = 15  # cada cuánto revisa el scheduler qué monitores están vencidos
+TICK_SEGUNDOS = 15
 
 redis_conn = Redis.from_url("redis://redis:6379")
 queue = Queue("default", connection=redis_conn)

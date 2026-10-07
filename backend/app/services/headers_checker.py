@@ -22,7 +22,6 @@ def evaluar_hsts(valor: str | None) -> dict:
                 pass
 
     incluye_subdominios = "includesubdomains" in valor.lower()
-    # Un max-age razonable: al menos 6 meses (15,552,000 segundos), criterio de Mozilla Observatory
     fuerte = max_age is not None and max_age >= 15_552_000
 
     return {

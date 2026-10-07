@@ -1,7 +1,20 @@
+import uuid
+
 from pydantic import BaseModel
+
+from app.schemas.monitor import CheckResumen
 
 
 class StatusItemOut(BaseModel):
-    nombre: str | None = None  # null en la global (varios usuarios pueden nombrarlo distinto)
+    nombre: str | None = None
     url: str
-    estado: str  # "operativo" | "caido" | "sin_datos"
+    estado: str
+
+
+class StatusMonitorOut(BaseModel):
+    id: uuid.UUID
+    nombre: str
+    url: str
+    verified: bool
+    estado: str
+    ultimo_check: CheckResumen | None = None

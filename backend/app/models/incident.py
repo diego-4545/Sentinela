@@ -12,17 +12,15 @@ class Incident(Base):
     __tablename__ = "incidents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    monitor_id = Column(UUID(as_uuid=True), ForeignKey("monitors.id"), nullable=False, index=True)
+    monitor_id = Column(UUID(as_uuid=True), ForeignKey("monitors.id", ondelete="CASCADE"), nullable=False, index=True)
 
     fecha_inicio = Column(DateTime, default=datetime.utcnow, nullable=False)
-    fecha_fin = Column(DateTime, nullable=True)  # null mientras el incidente sigue activo
+    fecha_fin = Column(DateTime, nullable=True)
 
-    # Causa: el tipo_error del check que disparó el incidente (ver app/models/check.py)
     causa = Column(String, nullable=False)
 
     resuelto = Column(Boolean, default=False, nullable=False)
 
-    # Control de notificaciones (sesión 6): cuándo fue la última vez que se avisó de este incidente
     ultima_notificacion_enviada = Column(DateTime, nullable=True)
 
-    monitor = relationship("Monitor", backref="incidents")
+    monitor = relationship("Monitor", back_populates="incidents")

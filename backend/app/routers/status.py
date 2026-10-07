@@ -1,11 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.status import StatusItemOut
-from app.services.status_aggregator import obtener_status_personal, obtener_status_global
+from app.schemas.status import StatusItemOut, StatusMonitorOut
+from app.services.status_aggregator import obtener_status_monitor, obtener_status_global
 
 router = APIRouter(prefix="/status", tags=["status"])
 
@@ -19,10 +19,13 @@ def status_global(db: Session = Depends(get_db)):
     return obtener_status_global(db)
 
 
-@router.get("/{user_id}", response_model=list[StatusItemOut])
-def status_personal(user_id: uuid.UUID, db: Session = Depends(get_db)):
+@router.get("/{monitor_id}", response_model=StatusMonitorOut)
+def status_personal(monitor_id: uuid.UUID, db: Session = Depends(get_db)):
     """
-    Pública, sin autenticación. Muestra solo los monitores que ESE usuario
-    marcó explícitamente como incluido_en_status_personal=True.
+    Pública, sin autenticación. Muestra exclusivamente el monitor solicitado,
+    si está activo y marcado para aparecer en un estado personal.
     """
-    return obtener_status_personal(user_id, db)
+    monitor = obtener_status_monitor(monitor_id, db)
+    if monitor is None:
+        raise HTTPException(status_code=404, detail="Estado del monitor no encontrado")
+    return monitor

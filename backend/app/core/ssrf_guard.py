@@ -24,16 +24,16 @@ ESQUEMAS_PERMITIDOS = {"http", "https"}
 
 RANGOS_BLOQUEADOS = [
     ipaddress.ip_network("0.0.0.0/8"),
-    ipaddress.ip_network("10.0.0.0/8"),          # red privada
-    ipaddress.ip_network("100.64.0.0/10"),       # CGNAT (incluye rango de Tailscale)
-    ipaddress.ip_network("127.0.0.0/8"),         # loopback
-    ipaddress.ip_network("169.254.0.0/16"),      # link-local (incluye metadata de AWS/GCP/Azure)
-    ipaddress.ip_network("172.16.0.0/12"),       # red privada
-    ipaddress.ip_network("192.168.0.0/16"),      # red privada
-    ipaddress.ip_network("198.18.0.0/15"),       # benchmarking
-    ipaddress.ip_network("::1/128"),             # loopback IPv6
-    ipaddress.ip_network("fc00::/7"),            # unique local IPv6
-    ipaddress.ip_network("fe80::/10"),           # link-local IPv6
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("100.64.0.0/10"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("198.18.0.0/15"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
 ]
 
 MAX_REDIRECTS = 5

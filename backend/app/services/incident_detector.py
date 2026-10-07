@@ -35,7 +35,7 @@ def _incidente_abierto(monitor_id, db: Session) -> Incident | None:
     )
 
 
-def _notificar(monitor: Monitor, mensaje: str, db: Session) -> None:
+def _notificar(monitor: Monitor, mensaje: str, asunto: str, db: Session) -> None:
     """
     Envía el mensaje a todos los canales activos configurados para este monitor.
     Solo se ejecuta si el monitor ya pasó la verificación de propiedad de dominio
@@ -55,7 +55,6 @@ def _notificar(monitor: Monitor, mensaje: str, db: Session) -> None:
         if canal.tipo == "discord":
             enviar_discord(canal.destino, mensaje)
         elif canal.tipo == "email":
-            asunto = "Sentinela — actualización de monitor"
             enviar_email(canal.destino, asunto, mensaje)
 
 
@@ -83,28 +82,25 @@ def evaluar_incidente(monitor: Monitor, check_actual: Check, db: Session) -> Non
     incidente_actual = _incidente_abierto(monitor.id, db)
 
     if check_actual.exitoso:
-        # El servicio respondió bien: si había un incidente abierto, se cierra aquí.
         if incidente_actual:
             incidente_actual.fecha_fin = datetime.utcnow()
             incidente_actual.resuelto = True
             db.commit()
 
             mensaje = construir_mensaje_cierre(monitor.nombre, monitor.url)
-            _notificar(monitor, mensaje, db)
+            asunto = f"[Sentinela] Incidente resuelto: {monitor.nombre}"
+            _notificar(monitor, mensaje, asunto, db)
         return
 
-    # El check actual falló. Si ya hay un incidente abierto, evaluamos si toca
-    # reenviar la notificación (respetando el enfriamiento) en vez de abrir uno nuevo.
     if incidente_actual:
         if _puede_notificar(incidente_actual, monitor):
             mensaje = construir_mensaje_apertura(monitor.nombre, monitor.url, check_actual.tipo_error or "desconocido")
-            _notificar(monitor, mensaje, db)
+            asunto = f"[Sentinela] Incidente abierto: {monitor.nombre}"
+            _notificar(monitor, mensaje, asunto, db)
             incidente_actual.ultima_notificacion_enviada = datetime.utcnow()
             db.commit()
         return
 
-    # No hay incidente abierto: revisamos si ya se acumulan suficientes fallos
-    # consecutivos para abrir uno nuevo.
     ultimos_checks = (
         db.query(Check)
         .filter(Check.monitor_id == monitor.id)
@@ -114,11 +110,11 @@ def evaluar_incidente(monitor: Monitor, check_actual: Check, db: Session) -> Non
     )
 
     if len(ultimos_checks) < monitor.umbral_fallos_consecutivos:
-        return  # todavía no hay suficiente historial para decidir
+        return
 
     todos_fallidos = all(not c.exitoso for c in ultimos_checks)
     if not todos_fallidos:
-        return  # hay al menos un éxito reciente dentro de la ventana, no se abre incidente
+        return
 
     nuevo_incidente = Incident(
         monitor_id=monitor.id,
@@ -130,4 +126,5 @@ def evaluar_incidente(monitor: Monitor, check_actual: Check, db: Session) -> Non
     db.commit()
 
     mensaje = construir_mensaje_apertura(monitor.nombre, monitor.url, check_actual.tipo_error or "desconocido")
-    _notificar(monitor, mensaje, db)
+    asunto = f"[Sentinela] Incidente abierto: {monitor.nombre}"
+    _notificar(monitor, mensaje, asunto, db)

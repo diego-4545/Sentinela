@@ -2,7 +2,6 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Dependencias del sistema necesarias para compilar psycopg2 y demás libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \

@@ -34,8 +34,6 @@ def verificar_propiedad_dominio(url_monitor: str, token: str) -> ResultadoVerifi
     base = f"{parsed.scheme}://{parsed.netloc}"
     url_archivo = f"{base}/sentinela-verify-{token}.txt"
 
-    # Misma mitigación SSRF que el resto del sistema: nunca se consulta una URL
-    # sin antes validar que no apunte a un recurso interno.
     try:
         validar_url_completa(url_archivo)
     except SSRFValidationError as e:

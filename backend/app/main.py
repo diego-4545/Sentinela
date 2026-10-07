@@ -9,11 +9,10 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Configuración de CORS para permitir solicitudes desde los subdominios del frontend y desarrollo local
 origins = [
     "https://app.sentinela.my",
     "https://status.sentinela.my",
-    "http://localhost:5173",  # Vite local por defecto
+    "http://localhost:5173",  
     "http://127.0.0.1:5173",
 ]
 
